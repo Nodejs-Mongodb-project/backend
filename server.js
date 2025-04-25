@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import casierRoutes from './routes/casier.route.js';
 
 dotenv.config();
 const app = express();
@@ -37,3 +38,5 @@ app.get('/health', (req, res) => {
     console.log('Health check endpoint hit');
     res.status(200).json({ message: 'Server is healthy' });
 });
+
+app.use('/api/casier', casierRoutes);
