@@ -62,6 +62,17 @@ const verifyTokenAdmin = (req, res, next) => {
     });
 }
 
+const verifyTokenString = (token) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(decoded);
+        });
+    });
+}
+
 const hashPassword = (password) => {
     const salt = bcrypt.genSaltSync(SALT_ROUNDS);
     return bcrypt.hashSync(password, salt);
@@ -77,8 +88,9 @@ const generateToken = (user) => {
 
 module.exports = {
     verifyToken,
+    verifyTokenAdmin,
+    verifyTokenString,
     hashPassword,
     comparePassword,
     generateToken,
-    verifyTokenAdmin,
 };
