@@ -1,7 +1,7 @@
-import express from 'express';
-import cors from 'cors';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 
 dotenv.config();
 const app = express();
@@ -34,5 +34,6 @@ app.listen(PORT, () => {
 });
 
 app.get('/health', (req, res) => {
+    console.log('Health check endpoint hit');
     res.status(200).json({ message: 'Server is healthy' });
 });

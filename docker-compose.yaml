@@ -9,8 +9,8 @@ services:
     volumes:
       - .:/app
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s # Check every 30 seconds
-      timeout: 10s  # Allow up to 10 seconds for a response
-      retries: 3    # Mark as unhealthy after 3 failed attempts
-      start_period: 30s # Wait 30 seconds before starting health checks
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
