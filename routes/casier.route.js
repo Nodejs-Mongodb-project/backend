@@ -24,6 +24,15 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+router.get('/status/:status', async (req, res) => {
+    try {
+        const casiers = await Casier.find({ status: req.params.status });
+        res.json(casiers);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 router.post('/', async (req, res) => {
     try {
         const existingCasier = await Casier.findOne({ numero: req.body.numero });
