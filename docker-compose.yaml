@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
       interval: 30s
