@@ -8,3 +8,8 @@ services:
       - "5000:5000"
     volumes:
       - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
