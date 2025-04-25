@@ -1,5 +1,5 @@
-import express from 'express';
-import Casier from '../schema/casier.schema.js';
+const express = require('express');
+const Casier = require('../schema/casier.schema.js');
 
 const router = express.Router();
 
@@ -77,4 +77,4 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;

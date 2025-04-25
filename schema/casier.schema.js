@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const casierSchema = new mongoose.Schema({
     numero: { type: Number, required: true },
@@ -7,4 +7,5 @@ const casierSchema = new mongoose.Schema({
     prix: { type: Number, required: true },
 });
 
-export default mongoose.model('Casier', casierSchema);
+
+module.exports = mongoose.model('Casier', casierSchema);
