@@ -1,8 +1,11 @@
-import express from 'express';
-import cors from 'cors';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import casierRoutes from './routes/casier.route.js';
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+const router = require('./routes/index.route');
+
+require('./utils/notification.util');
 
 dotenv.config();
 const app = express();
@@ -39,4 +42,4 @@ app.get('/health', (req, res) => {
     res.status(200).json({ message: 'Server is healthy' });
 });
 
-app.use('/api/casier', casierRoutes);
+app.use('/api/', router);
