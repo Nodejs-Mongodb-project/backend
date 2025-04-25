@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const userModel = require('../schema/user.schema');
 
 const { verifyToken, hashPassword, verifyTokenAdmin, generateToken } = require('../utils/auth.util');
+const { sendEmail } = require('../utils/email.util');
 
 dotenv.config();
 
@@ -24,28 +25,27 @@ router.post('/login', (req, res) => {
     }
 
     // Check if user exists
-    userModel.findOne({ email }, (err, user) => {
-        if (err) {
+    userModel.findOne({ email })
+        .then((user) => {
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            // Check password
+            const isPasswordValid = bcrypt.compareSync(password, user.password);
+            if (!isPasswordValid) {
+                return res.status(401).json({ message: 'Invalid email or password' });
+            }
+
+            // Generate JWT token
+            const token = generateToken(user);
+            user.token = token;
+            user.save();
+
+            res.status(200).json({ message: 'User logged in successfully', token });
+        })
+        .catch((err) => {
             return res.status(500).json({ message: 'Internal server error' });
-        }
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        // Check password
-        const isPasswordValid = bcrypt.compareSync(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        // Generate JWT token
-        const token = generateToken(user);
-        user.token = token;
-        user.save();
-
-        res.status(200).json({ message: 'User logged in successfully', token });
-    });
-    res.status(200).json({ message: 'User logged in successfully', user: { email } });
+        });
 });
 
 router.post('/register', (req, res) => {
@@ -56,34 +56,38 @@ router.post('/register', (req, res) => {
     }
 
     // Check if user already exists
-    userModel.findOne({ email }, (err, user) => {
-        if (err) {
+    userModel.findOne({ email })
+        .then((user) => {
+            if (user) {
+                return res.status(409).json({ message: 'User already; exists' });
+            }
+            // Hash password
+
+            const hashedPassword = hashPassword(password);
+            const newUser = new userModel({
+                name,
+                email,
+                password: hashedPassword,
+                token: null,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+            });
+
+            newUser.save().then((user) => {
+                if (!user) {
+                    return res.status(500).json({ message: 'Internal server error' });
+                }
+
+                // Send welcome email
+                sendEmail(email, 'Welcome to our service', `Hello ${name}, welcome to our service!`);
+                res.status(201).json({ message: 'User registered successfully', user: { name, email } });
+            }).catch((err) => {
+                return res.status(500).json({ message: 'Internal server error' });
+            });
+        })
+        .catch((err) => {
             return res.status(500).json({ message: 'Internal server error' });
-        }
-        if (user) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-    });
-
-    // Hash password
-
-    const hashedPassword = hashPassword(password);
-    const newUser = new userModel({
-        name,
-        email,
-        password: hashedPassword,
-        token: null,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-    });
-
-    newUser.save((err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Internal server error' });
-        }
-    });
-
-    res.status(201).json({ message: 'User registered successfully', user: { name, email } });
+        });
 });
 
 router.post('/logout', (req, res) => {
@@ -100,30 +104,21 @@ router.post('/logout', (req, res) => {
             return res.status(401).json({ message: 'Invalid token' });
         }
         // Find user and remove token
-        userModel.findById(decoded.id, (err, user) => {
-            if (err || !user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-            user.token = null;
-            user.save();
-        });
-    });
+        userModel.findById(decoded.id)
+            .then((user) => {
+                if (!user) {
+                    return res.status(404).json({ message: 'User not found' });
+                }
+                user.token = null;
+                user.save();
 
-    userModel.findOneAndUpdate(
-        { token },
-        { token: null },
-        { new: true },
-        (err, user) => {
-            if (err) {
-                return res.status(500).json({ message: 'Internal server error' });
-            }
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-        }
-    );
-    
-    res.status(200).json({ message: 'User logged out successfully' });
+                res.status(200).json({ message: 'User logged out successfully' });
+            }).then(() => {
+
+            }).catch((err) => {
+                return res.status(500).json({ message: 'Internal server error ' + err });
+            });
+    });
 });
 
 router.post('/reset-password', (req, res) => {
@@ -156,41 +151,40 @@ router.post('/reset-password', (req, res) => {
 
 router.post('/forgot-password', (req, res) => {
     console.log('Forgot password endpoint hit');
-    const { email } = req.query;
+    const { email } = req.body;
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
     }
     // Check if user exists
-    userModel.findOne({ email }, (err, user) => {
-        if (err) {
-            return res.status(500).json({ message: 'Internal server error' });
-        }
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-    });
-
-    // Generate password reset token
-    const resetToken = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-    // Send email with reset link (pseudo code)
-    // sendEmail(email, `Click here to reset your password: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`);
-
-    // Save reset token to user
-    userModel
-        .findByIdAndUpdate(user._id
-            , { token: resetToken }, { new: true })
+    userModel.findOne({ email })
         .then((user) => {
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
             }
-            // Send email with reset link (pseudo code)
-            // sendEmail(email, `Click here to reset your password: ${FRONTEND_URL}/reset-password?token=${resetToken}`);
-        })
-        .catch((err) => {
-            return res.status(500).json({ message: 'Internal server error' });
+            // Generate password reset token
+            const resetToken = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+            
+            // Save reset token to user
+            userModel
+                .findByIdAndUpdate(user._id
+                    , { token: resetToken }, { new: true })
+                .then((user) => {
+                    if (!user) {
+                        return res.status(404).json({ message: 'User not found' });
+                    }
+                    // Send email with reset link
+                    sendEmail(email, 'Password reset procedure', `Click here to reset your password: ${FRONTEND_URL}/reset-password?token=${resetToken}`);
+                    res.status(200).json({ message: 'Password reset link sent to email', email });
+                })
+                .catch((err) => {
+                    return res.status(500).json({ message: 'Internal server error ' + err });
+                });
+        }).catch((err) => {
+            return res.status(500).json({ message: 'Internal server error ' + err });
         });
 
-    res.status(200).json({ message: 'Password reset link sent to email', email });
+
+    
 });
 
 router.get('/', verifyTokenAdmin, (req, res) => {
