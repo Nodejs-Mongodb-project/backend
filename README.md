@@ -29,6 +29,7 @@ This project is a backend application built with Node.js and MongoDB. It provide
 - **Node-cron**: For scheduling tasks.
 - **Docker**: For containerization.
 - **PM2**: For process management.
+- **Jest**: Testing framework for unit tests.
 
 ## Prerequisites
 
@@ -129,9 +130,23 @@ backend/
 - Use tools like Postman or cURL to test the API endpoints.
 - Ensure MongoDB is running locally or provide a valid `MONGO_URI`.
 
+## Jest Tests
+
+Run unit tests using Jest :
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests with coverage report
+npm run test:cov
+```
+
+Access the coverage report in the `coverage/lcov-report` directory with `index.html`.
+
 ## Future Enhancements
 
-- Add unit and integration tests.
+- Add integration tests.
 - Implement more granular role-based access control.
 - Enhance email templates with HTML formatting.
 - Add frontend integration.
