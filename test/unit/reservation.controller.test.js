@@ -1,7 +1,7 @@
 const {
     reserverCasier,
     cancelReservation
-} = require('../../controller/reservation.controller');
+} = require('../../controllers/reservation.controller');
 
 const Casier = require('../../schema/casier.schema');
 const Reservation = require('../../schema/reservation.schema');

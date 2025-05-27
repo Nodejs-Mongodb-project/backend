@@ -5,7 +5,7 @@ const {
     getCasiersByStatus,
     updateCasier,
     deleteCasier
-} = require('../../controller/casier.controller');
+} = require('../../controllers/casier.controller');
 
 // Mock du modèle Casier
 const Casier = require('../../schema/casier.schema');
