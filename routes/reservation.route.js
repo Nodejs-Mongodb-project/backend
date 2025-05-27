@@ -8,7 +8,7 @@ const {
         cancelReservation,
         getAllReservations,
         getReservationByCasierId
-    } = require('../controller/reservation.controller');
+    } = require('../controllers/reservation.controller');
 const { verifyToken } = require('../utils/auth.util');
 
 router.post('/reserver', verifyToken, reserverCasier);

@@ -11,7 +11,7 @@ const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1d';
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS) || 10;
 
 const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization'];
+    const token = req.headers['Authorization']?.split(' ')[1] || req.headers['authorization']?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
@@ -21,10 +21,9 @@ const verifyToken = (req, res, next) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
         req.userId = decoded.id;
-    })
-    .then(() => {
+        
         // Verify the token with the user's token in the database
-        userModel.findById(req.userId, (err, user) => {
+        userModel.findById(req.userId).then((user) => {
             if (err || !user) {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
@@ -37,7 +36,7 @@ const verifyToken = (req, res, next) => {
 }
 
 const verifyTokenAdmin = (req, res, next) => {
-    const token = req.headers['authorization'];
+    const token = req.headers['Authorization']?.split(' ')[1] || req.headers['authorization']?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
@@ -47,10 +46,9 @@ const verifyTokenAdmin = (req, res, next) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
         req.userId = decoded.id;
-    })
-    .then(() => {
+        
         // Verify the token with the user's token in the database
-        userModel.findById(req.userId, (err, user) => {
+        userModel.findById(req.userId).then((user) => {
             if (err || !user) {
                 return res.status(401).json({ message: 'Unauthorized' });
             }

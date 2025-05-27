@@ -1,6 +1,7 @@
 const express = require('express');
 
-const { getAllCasiers, getCasierById, getCasiersByStatus, createCasier, updateCasier, deleteCasier } = require('../controller/casier.controller.js');
+const { getAllCasiers, getCasierById, getCasiersByStatus, createCasier, updateCasier, deleteCasier } = require('../controllers/casier.controller.js');
+const { verifyTokenAdmin } = require('../utils/auth.util.js');
 
 const router = express.Router();
 
@@ -10,10 +11,10 @@ router.get('/:id', getCasierById);
 
 router.get('/status/:status', getCasiersByStatus);
 
-router.post('/', createCasier);
+router.post('/', verifyTokenAdmin, createCasier);
 
-router.put('/:id', updateCasier);
+router.put('/:id', verifyTokenAdmin, updateCasier);
 
-router.delete('/:id', deleteCasier);
+router.delete('/:id', verifyTokenAdmin, deleteCasier);
 
 module.exports = router;

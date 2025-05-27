@@ -1,8 +1,8 @@
 const express = require('express');
 
 
-const { register, login, logout, resetPassword, forgotPassword, getAllUsers } = require('../controller/auth.controller');
-const { verifyTokenAdmin } = require('../utils/auth.util');
+const { register, login, logout, resetPassword, forgotPassword, getAllUsers, getMe } = require('../controllers/auth.controller');
+const { verifyTokenAdmin, verifyToken } = require('../utils/auth.util');
 
 
 
@@ -19,5 +19,7 @@ router.post('/reset-password', resetPassword);
 router.post('/forgot-password', forgotPassword);
 
 router.get('/', verifyTokenAdmin, getAllUsers);
+
+router.get('/me', verifyToken, getMe)
 
 module.exports = router;
