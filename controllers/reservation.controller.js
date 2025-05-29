@@ -44,12 +44,9 @@ const getReservationsByUserId = async () => {
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
     }
-    const dateExpiration = new Date();
     const reservations = await Reservation.find({ userId }).populate('casierId');
-    const activeReservations = reservations.filter(reservation =>
-      reservation.dateExpiration > dateExpiration && reservation.statut === 'active'
-    );
-    return res.status(200).json({ reservations: activeReservations });
+
+    return res.status(200).json({ reservations: reservations });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Erreur serveur' });

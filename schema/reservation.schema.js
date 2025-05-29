@@ -6,7 +6,7 @@ const reservationSchema = new mongoose.Schema({
   dateDebut: { type: Date, default: Date.now },
   dateExpiration: { type: Date, required: true },
   prixTotal: { type: Number, required: true },
-  statut: { type: String, enum: ['active', 'expirée'], default: 'active' }
+  statut: { type: String, enum: ['active', 'expired'], default: 'active' }
 });
 
 module.exports = mongoose.model('Reservation', reservationSchema);
