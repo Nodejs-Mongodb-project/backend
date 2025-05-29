@@ -38,23 +38,34 @@ const reserverCasier = async (req, res) => {
   }
 };
 
-const getReservationsByUserId = async (userId) => {
+const getReservationsByUserId = async () => {
   try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    const dateExpiration = new Date();
     const reservations = await Reservation.find({ userId }).populate('casierId');
-    return reservations;
+    const activeReservations = reservations.filter(reservation =>
+      reservation.dateExpiration > dateExpiration && reservation.statut === 'active'
+    );
+    return res.status(200).json({ reservations: activeReservations });
   } catch (error) {
     console.error(error);
-    throw new Error('Erreur lors de la récupération des réservations');
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
-}
+};
 
 const getReservationById = async (reservationId) => {
   try {
     const reservation = await Reservation.findById(reservationId).populate('casierId');
-    return reservation;
+    if (!reservation) {
+      return res.status(404).json({ message: 'Réservation non trouvée' });
+    }
+    return res.status(200).json(reservation);
   } catch (error) {
     console.error(error);
-    throw new Error('Erreur lors de la récupération de la réservation');
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
 
@@ -62,12 +73,13 @@ const cancelReservation = async (reservationId) => {
   try {
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) {
-      throw new Error('Réservation non trouvée');
+      return res.status(404).json({ message: 'Réservation non trouvée' });
     }
 
     const casier = await Casier.findById(reservation.casierId);
     if (!casier) {
-      console.emailrror('Casier non trouvé');
+      console.error('Casier non trouvé');
+      return res.status(404).json({ message: 'Casier non trouvé' });
     }
     casier.statut = 'disponible';
     await casier.save();
@@ -77,21 +89,20 @@ const cancelReservation = async (reservationId) => {
       subject: 'Réservation annulée',
       text: `Votre réservation pour le casier #${casier.numero} a été annulée.`
     });
-    return { message: 'Réservation annulée avec succès' };
-  }
-  catch (error) {
+    return res.status(200).json({ message: 'Réservation annulée avec succès' });
+  } catch (error) {
     console.error(error);
-    throw new Error('Erreur lors de l\'annulation de la réservation');
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
 
 const getAllReservations = async () => {
   try {
     const reservations = await Reservation.find().populate('userId casierId');
-    return reservations;
+    return res.status(200).json(reservations);
   } catch (error) {
     console.error(error);
-    throw new Error('Erreur lors de la récupération des réservations');
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
 }
 
@@ -100,11 +111,11 @@ const getReservationByCasierId = async (casierId) => {
     const reservation = await Reservation
       .findOne({ casierId })
       .populate('userId casierId');
-    return reservation;
-  }
-  catch (error) {
+    
+      return res.status(200).json(reservation);
+  } catch (error) {
     console.error(error);
-    throw new Error('Erreur lors de la récupération de la réservation');
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
 
