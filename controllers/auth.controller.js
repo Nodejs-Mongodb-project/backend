@@ -38,18 +38,18 @@ const register = async (req, res) => {
 
             newUser.save().then((user) => {
                 if (!user) {
-                    return res.status(500).json({ message: 'Internal server error' });
+                    return res.status(500).json({ message: 'Erreur lors de la création de l\'utilisateur' });
                 }
 
                 // Send welcome email
                 sendEmail(email, 'Welcome to our service', `Hello ${name}, welcome to our service!`);
                 res.status(201).json({ message: 'User registered successfully', user: { name, email } });
             }).catch((err) => {
-                return res.status(500).json({ message: 'Internal server error' });
+                return res.status(500).json({ message: 'Erreur interne du serveur why' });
             });
         })
         .catch((err) => {
-            return res.status(500).json({ message: 'Internal server error' });
+            return res.status(500).json({ message: 'Erreur interne du serveur' });
         });
 };
 
@@ -213,7 +213,16 @@ const getMe = async (req, res) => {
                 if (!user) {
                     return res.status(404).json({ message: 'User not found' });
                 }
-                res.status(200).json({ message: 'User retrieved successfully', user });
+                
+                res.status(200).json({
+                    message: 'User retrieved successfully',
+                    user: {
+                        _id: user._id,
+                        name: user.name,
+                        email: user.email,
+                        isAdmin: user.isAdmin,
+                    }
+                });
             }).catch((err) => {
                 return res.status(500).json({ message: 'Internal server error ' + err });
             });
