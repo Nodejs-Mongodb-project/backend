@@ -5,7 +5,7 @@ const sendEmail = require('../utils/email.util');
 const reserverCasier = async (req, res) => {
   try {
     const { casierId, dureeHeures } = req.body;
-    const userId = req.user._id;
+    const userId = req.query.userId;
 
     const casier = await Casier.findById(casierId);
     if (!casier || casier.statut !== 'disponible') {
@@ -38,7 +38,7 @@ const reserverCasier = async (req, res) => {
   }
 };
 
-const getReservationsByUserId = async () => {
+const getReservationsByUserId = async (req, res) => {
   try {
     const userId = req.query.userId;
     if (!userId) {
@@ -53,8 +53,9 @@ const getReservationsByUserId = async () => {
   }
 };
 
-const getReservationById = async (reservationId) => {
+const getReservationById = async (req, res) => {
   try {
+    const reservationId = req.query.id;
     const reservation = await Reservation.findById(reservationId).populate('casierId');
     if (!reservation) {
       return res.status(404).json({ message: 'Réservation non trouvée' });
@@ -66,8 +67,9 @@ const getReservationById = async (reservationId) => {
   }
 };
 
-const cancelReservation = async (reservationId) => {
+const cancelReservation = async (req, res) => {
   try {
+    const reservationId = req.query.id;
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) {
       return res.status(404).json({ message: 'Réservation non trouvée' });
@@ -93,7 +95,7 @@ const cancelReservation = async (reservationId) => {
   }
 };
 
-const getAllReservations = async () => {
+const getAllReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find().populate('userId casierId');
     return res.status(200).json(reservations);
@@ -103,8 +105,9 @@ const getAllReservations = async () => {
   }
 }
 
-const getReservationByCasierId = async (casierId) => {
+const getReservationByCasierId = async (req, res) => {
   try {
+    const casierId = req.query.casierId;
     const reservation = await Reservation
       .findOne({ casierId })
       .populate('userId casierId');
