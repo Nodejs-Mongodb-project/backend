@@ -80,6 +80,7 @@ const login = async (req, res) => {
             res.status(200).json({ message: 'User logged in successfully', token });
         })
         .catch((err) => {
+            console.log(err)
             return res.status(500).json({ message: 'Internal server error' });
         });
 };
