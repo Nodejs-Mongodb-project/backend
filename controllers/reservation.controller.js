@@ -46,10 +46,10 @@ const getReservationsByUserId = async (req, res) => {
     }
     const reservations = await Reservation.find({ userId }).populate('casierId');
 
-    return res.status(200).json({ reservations: reservations });
+    return reservations
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    throw new Error('Erreur lors de la récupération des réservations');
   }
 };
 
@@ -60,10 +60,10 @@ const getReservationById = async (req, res) => {
     if (!reservation) {
       return res.status(404).json({ message: 'Réservation non trouvée' });
     }
-    return res.status(200).json(reservation);
+    return reservation;
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    throw new Error('Erreur lors de la récupération de la réservation');
   }
 };
 
@@ -72,7 +72,7 @@ const cancelReservation = async (req, res) => {
     const reservationId = req.query.id;
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) {
-      return res.status(404).json({ message: 'Réservation non trouvée' });
+      throw new Error('Réservation non trouvée');
     }
 
     const casier = await Casier.findById(reservation.casierId);
@@ -88,20 +88,20 @@ const cancelReservation = async (req, res) => {
       subject: 'Réservation annulée',
       text: `Votre réservation pour le casier #${casier.numero} a été annulée.`
     });
-    return res.status(200).json({ message: 'Réservation annulée avec succès' });
+    return { message: 'Réservation annulée avec succès' };
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    throw new Error('Erreur lors de l\'annulation de la réservation');
   }
 };
 
 const getAllReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find().populate('userId casierId');
-    return res.status(200).json(reservations);
+    return reservations;
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    throw new Error('Erreur lors de la récupération des réservations');
   }
 }
 
@@ -112,10 +112,10 @@ const getReservationByCasierId = async (req, res) => {
       .findOne({ casierId })
       .populate('userId casierId');
     
-      return res.status(200).json(reservation);
+    return reservation;
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    throw new Error('Erreur lors de la récupération de la réservation');
   }
 };
 
