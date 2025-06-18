@@ -6,10 +6,12 @@ const {
 const Casier = require('../../schema/casier.schema');
 const Reservation = require('../../schema/reservation.schema');
 const sendEmail = require('../../utils/email.util');
+const jwt = require('jsonwebtoken');
 
 jest.mock('../../schema/casier.schema');
 jest.mock('../../schema/reservation.schema');
 jest.mock('../../utils/email.util', () => jest.fn());
+jest.mock('jsonwebtoken');
 
 describe('ReservationController', () => {
     let req, res;
@@ -17,6 +19,9 @@ describe('ReservationController', () => {
     beforeEach(() => {
         req = {
             body: {},
+            headers: {
+                authorization: 'Bearer valid-token'
+            },
             user: { _id: 'user123', email: 'test@example.com' }
         };
         res = {
@@ -27,6 +32,15 @@ describe('ReservationController', () => {
         jest.clearAllMocks();
         // Mock la méthode console.error pour éviter les logs dans les tests
         jest.spyOn(console, 'error').mockImplementation(() => {});
+        
+        // Mock JWT verification
+        jwt.verify.mockReturnValue({
+            id: 'user123',
+            email: 'test@example.com'
+        });
+        
+        // Mock process.env
+        process.env.JWT_SECRET = 'test-secret';
     });
 
     describe('reserverCasier', () => {
@@ -38,7 +52,7 @@ describe('ReservationController', () => {
                 _id: 'casier123',
                 numero: 42,
                 prix: 10,
-                statut: 'available',
+                status: 'available',
                 save: jest.fn().mockResolvedValue()
             };
             
@@ -57,6 +71,7 @@ describe('ReservationController', () => {
             await reserverCasier(req, res);
             
             // Assert
+            expect(jwt.verify).toHaveBeenCalledWith('valid-token', 'test-secret');
             expect(Casier.findById).toHaveBeenCalledWith('casier123');
             expect(Reservation.create).toHaveBeenCalledWith({
                 userId: 'user123',
@@ -65,7 +80,7 @@ describe('ReservationController', () => {
                 prixTotal: 20
             });
             expect(mockCasier.save).toHaveBeenCalled();
-            expect(mockCasier.statut).toBe('réservé');
+            expect(mockCasier.status).toBe('reserved');
             expect(sendEmail).toHaveBeenCalledWith({
                 to: 'test@example.com',
                 subject: 'Réservation confirmée',
@@ -84,7 +99,7 @@ describe('ReservationController', () => {
             
             const mockCasier = {
                 _id: 'casier123',
-                statut: 'réservé' // Déjà réservé
+                status: 'reserved' // Déjà réservé
             };
             
             Casier.findById.mockResolvedValue(mockCasier);
@@ -113,6 +128,38 @@ describe('ReservationController', () => {
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({
                 message: 'Ce casier est déjà réservé.'
+            });
+        });
+        
+        test('should return error when token is missing', async () => {
+            // Arrange
+            req.headers = {}; // No authorization header
+            req.body = { casierId: 'casier123', dureeHeures: 2 };
+            
+            // Act
+            await reserverCasier(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Token manquant'
+            });
+        });
+        
+        test('should return error when token is invalid', async () => {
+            // Arrange
+            req.body = { casierId: 'casier123', dureeHeures: 2 };
+            jwt.verify.mockImplementation(() => {
+                throw new Error('Invalid token');
+            });
+            
+            // Act
+            await reserverCasier(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Token invalide'
             });
         });
         
@@ -147,7 +194,7 @@ describe('ReservationController', () => {
             const mockCasier = {
                 _id: 'casier123',
                 numero: 42,
-                statut: 'réservé',
+                status: 'reserved',
                 save: jest.fn().mockResolvedValue()
             };
             
@@ -162,7 +209,7 @@ describe('ReservationController', () => {
             // Assert
             expect(Reservation.findById).toHaveBeenCalledWith('reservation123');
             expect(Casier.findById).toHaveBeenCalledWith('casier123');
-            expect(mockCasier.statut).toBe('available');
+            expect(mockCasier.status).toBe('available');
             expect(mockCasier.save).toHaveBeenCalled();
             expect(Reservation.deleteOne).toHaveBeenCalledWith({ _id: 'reservation123' });
             expect(sendEmail).toHaveBeenCalledWith({

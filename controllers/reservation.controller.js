@@ -1,14 +1,34 @@
 const Casier = require('../schema/casier.schema');
 const Reservation = require('../schema/reservation.schema');
 const sendEmail = require('../utils/email.util');
+const jwt = require('jsonwebtoken');
 
 const reserverCasier = async (req, res) => {
   try {
     const { casierId, dureeHeures } = req.body;
-    const userId = req.user._id;
+    const token = req.headers['Authorization']?.split(' ')[1] || req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ message: 'Token manquant' });
+    }
+
+    let decodedToken;
+
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      console.error('Erreur lors de la vérification du token:', error);
+      return res.status(401).json({ message: 'Token invalide' });
+    }
+
+    const userId = decodedToken.id;
+
+    if (!casierId || !dureeHeures || !userId) {
+      return res.status(400).json({ message: 'Casier ID, durée et User ID sont requis.' });
+    }
 
     const casier = await Casier.findById(casierId);
-    if (!casier || casier.statut !== 'available') {
+    if (!casier || casier.status !== 'available') {
       return res.status(400).json({ message: 'Ce casier est déjà réservé.' });
     }
 
@@ -22,11 +42,11 @@ const reserverCasier = async (req, res) => {
       prixTotal
     });
 
-    casier.statut = 'réservé';
+    casier.status = 'reserved';
     await casier.save();
 
     await sendEmail({
-      to: req.user.email,
+      to: decodedToken.email,
       subject: 'Réservation confirmée',
       text: `Casier #${casier.numero} réservé pour ${dureeHeures}h jusqu'à ${dateExpiration}`
     });
@@ -78,7 +98,7 @@ const cancelReservation = async (reservationId) => {
     if (!casier) {
       throw new Error('Casier non trouvé');
     }
-    casier.statut = 'available';
+    casier.status = 'available';
     await casier.save();
     await Reservation.deleteOne({ _id: reservationId });
     await sendEmail({
