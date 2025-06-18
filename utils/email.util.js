@@ -18,6 +18,14 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async (to, subject, text) => {
     try {
+        // Handle object parameter style
+        if (typeof to === 'object' && to.to) {
+            const emailData = to;
+            to = emailData.to;
+            subject = emailData.subject;
+            text = emailData.text;
+        }
+
         const mailOptions = {
             from: process.env.SMTP_USER,
             to,

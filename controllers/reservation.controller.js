@@ -1,6 +1,6 @@
 const Casier = require('../schema/casier.schema');
 const Reservation = require('../schema/reservation.schema');
-const sendEmail = require('../utils/email.util');
+const { sendEmail } = require('../utils/email.util');
 const jwt = require('jsonwebtoken');
 
 const reserverCasier = async (req, res) => {
@@ -45,11 +45,11 @@ const reserverCasier = async (req, res) => {
     casier.status = 'reserved';
     await casier.save();
 
-    await sendEmail({
-      to: decodedToken.email,
-      subject: 'Réservation confirmée',
-      text: `Casier #${casier.numero} réservé pour ${dureeHeures}h jusqu'à ${dateExpiration}`
-    });
+    await sendEmail(
+      decodedToken.email,
+      'Réservation confirmée',
+      `Casier #${casier.numero} réservé pour ${dureeHeures}h jusqu'à ${dateExpiration}`
+    );
 
     res.status(201).json({ message: 'Réservation réussie', reservation });
   } catch (error) {
@@ -101,11 +101,11 @@ const cancelReservation = async (reservationId) => {
     casier.status = 'available';
     await casier.save();
     await Reservation.deleteOne({ _id: reservationId });
-    await sendEmail({
-      to: reservation.userId,
-      subject: 'Réservation annulée',
-      text: `Votre réservation pour le casier #${casier.numero} a été annulée.`
-    });
+    await sendEmail(
+      reservation.userId,
+      'Réservation annulée',
+      `Votre réservation pour le casier #${casier.numero} a été annulée.`
+    );
     return { message: 'Réservation annulée avec succès' };
   } catch (error) {
     console.error(error);

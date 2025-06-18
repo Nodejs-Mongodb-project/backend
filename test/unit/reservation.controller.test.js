@@ -5,12 +5,14 @@ const {
 
 const Casier = require('../../schema/casier.schema');
 const Reservation = require('../../schema/reservation.schema');
-const sendEmail = require('../../utils/email.util');
+const { sendEmail } = require('../../utils/email.util');
 const jwt = require('jsonwebtoken');
 
 jest.mock('../../schema/casier.schema');
 jest.mock('../../schema/reservation.schema');
-jest.mock('../../utils/email.util', () => jest.fn());
+jest.mock('../../utils/email.util', () => ({
+    sendEmail: jest.fn()
+}));
 jest.mock('jsonwebtoken');
 
 describe('ReservationController', () => {
@@ -81,11 +83,11 @@ describe('ReservationController', () => {
             });
             expect(mockCasier.save).toHaveBeenCalled();
             expect(mockCasier.status).toBe('reserved');
-            expect(sendEmail).toHaveBeenCalledWith({
-                to: 'test@example.com',
-                subject: 'Réservation confirmée',
-                text: expect.stringContaining('Casier #42 réservé pour 2h')
-            });
+            expect(sendEmail).toHaveBeenCalledWith(
+                'test@example.com',
+                'Réservation confirmée',
+                expect.stringContaining('Casier #42 réservé pour 2h')
+            );
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith({
                 message: 'Réservation réussie',
@@ -212,11 +214,11 @@ describe('ReservationController', () => {
             expect(mockCasier.status).toBe('available');
             expect(mockCasier.save).toHaveBeenCalled();
             expect(Reservation.deleteOne).toHaveBeenCalledWith({ _id: 'reservation123' });
-            expect(sendEmail).toHaveBeenCalledWith({
-                to: 'user123',
-                subject: 'Réservation annulée',
-                text: expect.stringContaining('casier #42 a été annulée')
-            });
+            expect(sendEmail).toHaveBeenCalledWith(
+                'user123',
+                'Réservation annulée',
+                expect.stringContaining('casier #42 a été annulée')
+            );
             expect(result).toEqual({
                 message: 'Réservation annulée avec succès'
             });
