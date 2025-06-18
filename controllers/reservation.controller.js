@@ -8,7 +8,7 @@ const reserverCasier = async (req, res) => {
     const userId = req.query.userId;
 
     const casier = await Casier.findById(casierId);
-    if (!casier || casier.statut !== 'disponible') {
+    if (!casier || casier.status !== 'disponible') {
       return res.status(400).json({ message: 'Ce casier est déjà réservé.' });
     }
 
@@ -22,7 +22,7 @@ const reserverCasier = async (req, res) => {
       prixTotal
     });
 
-    casier.statut = 'réservé';
+    casier.status = 'réservé';
     await casier.save();
 
     await sendEmail({
