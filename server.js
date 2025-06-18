@@ -21,25 +21,26 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-// Connect to MongoDB
-mongoose.connect(MONGO_URI)
-    .then(() => {
-        console.log('Connected to MongoDB');
-    })
-    .catch((err) => {
-        console.error('MongoDB connection error:', err);
-    });
-
-// Use Routes
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
 app.get('/health', (req, res) => {
     console.log('Health check endpoint hit');
     res.status(200).json({ message: 'Server is healthy' });
 });
 
 app.use('/api/', router);
+
+// Connect to MongoDB and start server only after connection is established
+const startServer = async () => {
+    try {
+        await mongoose.connect(MONGO_URI);
+        console.log('Connected to MongoDB');
+        
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    }
+};
+
+startServer();
