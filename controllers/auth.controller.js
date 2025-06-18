@@ -12,7 +12,6 @@ dotenv.config();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const register = async (req, res) => {
-    console.log('Register endpoint hit');
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
         return res.status(400).json({ message: 'All fields are required' });
@@ -54,7 +53,6 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-    console.log('Login endpoint hit');
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
@@ -86,8 +84,6 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-    console.log('Logout endpoint hit');
-
     const { token } = req.body;
 
     if (!token) {
@@ -117,39 +113,37 @@ const logout = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-    console.log('Reset password endpoint hit');
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
         return res.status(400).json({ message: 'Token and new password are required' });
     }
 
-    // Verify token
-    let decoded;
     try {
-        decoded = await verifyTokenString(token);
+        // Verify token
+        const decoded = await verifyTokenString(token);
+        
+        // Find user and update password
+        const user = await userModel.findById(decoded.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        const hashedPassword = hashPassword(newPassword);
+        user.password = hashedPassword;
+        user.token = null;
+        await user.save();
+        
+        return res.status(200).json({ message: 'Password reset successfully' });
     } catch (err) {
-        return res.status(401).json({ message: 'Invalid token' });
+        console.error('Password reset error:', err);
+        if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Invalid token' });
+        }
+        return res.status(500).json({ message: 'Internal server error' });
     }
-    
-    // Find user and update password
-    userModel.findById(decoded.id)
-        .then((user) => {
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-            const hashedPassword = hashPassword(newPassword);
-            user.password = hashedPassword;
-            user.token = null;
-            user.save();
-        }).catch((err) => {
-            return res.status(500).json({ message: 'Internal server error ' + err });
-        });
-
-    res.status(200).json({ message: 'Password reset successfully' });
 };
 
 const forgotPassword = async (req, res) => {
-    console.log('Forgot password endpoint hit');
     const { email } = req.body;
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
@@ -185,7 +179,6 @@ const forgotPassword = async (req, res) => {
 };
 
 const getAllUsers = async (req, res) => {
-    console.log('get all user endpoint hit');
     userModel.find({}, (err, users) => {
         if (err) {
             return res.status(500).json({ message: 'Internal server error' });
@@ -198,7 +191,6 @@ const getAllUsers = async (req, res) => {
 };
 
 const getMe = async (req, res) => {
-    console.log('Get me endpoint hit');
     const token = req.headers['authorization'].split(' ')[1];
     if (!token) {
         return res.status(400).json({ message: 'Token is required' });
