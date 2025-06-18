@@ -38,7 +38,7 @@ describe('ReservationController', () => {
                 _id: 'casier123',
                 numero: 42,
                 prix: 10,
-                statut: 'disponible',
+                statut: 'available',
                 save: jest.fn().mockResolvedValue()
             };
             
@@ -162,7 +162,7 @@ describe('ReservationController', () => {
             // Assert
             expect(Reservation.findById).toHaveBeenCalledWith('reservation123');
             expect(Casier.findById).toHaveBeenCalledWith('casier123');
-            expect(mockCasier.statut).toBe('disponible');
+            expect(mockCasier.statut).toBe('available');
             expect(mockCasier.save).toHaveBeenCalled();
             expect(Reservation.deleteOne).toHaveBeenCalledWith({ _id: 'reservation123' });
             expect(sendEmail).toHaveBeenCalledWith({

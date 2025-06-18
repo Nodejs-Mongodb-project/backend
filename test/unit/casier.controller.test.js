@@ -31,8 +31,8 @@ describe('CasierController', () => {
         test('should return all casiers', async () => {
             // Arrange : définir ce que le mock doit retourner
             const mockCasiers = [
-                { _id: '1', numero: 123, taille: 'M', status: 'disponible' },
-                { _id: '2', numero: 124, taille: 'L', status: 'reservé' }
+                { _id: '1', numero: 123, taille: 'M', status: 'available' },
+                { _id: '2', numero: 124, taille: 'L', status: 'reserved' }
             ];
             Casier.find.mockResolvedValue(mockCasiers);
 
@@ -104,7 +104,7 @@ describe('CasierController', () => {
         test('should create casier when numero is unique', async () => {
             // Arrange
             req.body = { numero: 125, taille: 'M', prix: 50 };
-            const savedCasier = { _id: '3', ...req.body, status: 'disponible' };
+            const savedCasier = { _id: '3', ...req.body, status: 'available' };
 
             Casier.findOne.mockResolvedValue(null); // Pas de casier existant
             Casier.prototype.save = jest.fn().mockResolvedValue(savedCasier);
@@ -151,23 +151,23 @@ describe('CasierController', () => {
         test('should return casiers with specific status', async () => {
             // Arrange
             const mockCasiers = [
-                { _id: '1', numero: 123, status: 'disponible' },
-                { _id: '2', numero: 124, status: 'disponible' }
+                { _id: '1', numero: 123, status: 'available' },
+                { _id: '2', numero: 124, status: 'available' }
             ];
-            req.params.status = 'disponible';
+            req.params.status = 'available';
             Casier.find.mockResolvedValue(mockCasiers);
 
             // Act
             await getCasiersByStatus(req, res);
 
             // Assert
-            expect(Casier.find).toHaveBeenCalledWith({ status: 'disponible' });
+            expect(Casier.find).toHaveBeenCalledWith({ status: 'available' });
             expect(res.json).toHaveBeenCalledWith(mockCasiers);
         });
 
         test('should handle errors in getCasiersByStatus', async () => {
             // Arrange
-            req.params.status = 'reservé';
+            req.params.status = 'reserved';
             Casier.find.mockRejectedValue(new Error('Database error'));
 
             // Act
