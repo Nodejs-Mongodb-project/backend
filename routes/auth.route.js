@@ -1,7 +1,7 @@
 const express = require('express');
 
 
-const { register, login, logout, resetPassword, forgotPassword, getAllUsers, getMe } = require('../controllers/auth.controller');
+const { register, login, logout, resetPassword, forgotPassword, getAllUsers, getMe, getUserCount } = require('../controllers/auth.controller');
 const { verifyTokenAdmin, verifyToken } = require('../utils/auth.util');
 
 
@@ -20,6 +20,8 @@ router.post('/forgot-password', forgotPassword);
 
 router.get('/', verifyTokenAdmin, getAllUsers);
 
-router.get('/me', verifyToken, getMe)
+router.get('/me', verifyToken, getMe);
+
+router.get('/count', verifyTokenAdmin, getUserCount);
 
 module.exports = router;

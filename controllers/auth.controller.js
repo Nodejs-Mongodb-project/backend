@@ -222,6 +222,26 @@ const getMe = async (req, res) => {
     });
 };
 
+const getUserCount = async (req, res) => {
+    try {
+        // Compter le nombre total d'utilisateurs
+        const userCount = await userModel.countDocuments();
+        
+        // Compter aussi les admins might be useful ^^
+        const adminCount = await userModel.countDocuments({ isAdmin: true });
+        
+        res.status(200).json({ 
+            message: 'User count retrieved successfully',
+            totalUsers: userCount,
+            adminUsers: adminCount,
+            regularUsers: userCount - adminCount
+        });
+    } catch (err) {
+        console.error('Error getting user count:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -230,4 +250,5 @@ module.exports = {
     forgotPassword,
     getAllUsers,
     getMe,
+    getUserCount
 };
