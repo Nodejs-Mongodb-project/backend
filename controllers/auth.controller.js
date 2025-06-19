@@ -186,6 +186,15 @@ const getAllUsers = async (req, res) => {
         if (!users) {
             return res.status(404).json({ message: 'No users found' });
         }
+        // map users to hide password
+        users = users.map(user => ({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        }));
         res.status(200).json({ message: 'Users retrieved successfully', users });
     });
 };
