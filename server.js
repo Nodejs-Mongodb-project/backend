@@ -5,8 +5,6 @@ const dotenv = require('dotenv');
 
 const router = require('./routes/index.route');
 
-require('./utils/notification.util');
-
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +31,10 @@ const startServer = async () => {
     try {
         await mongoose.connect(MONGO_URI);
         console.log('Connected to MongoDB');
+        
+        // Import notification utility after MongoDB connection is established
+        require('./utils/notification.util');
+        console.log('Notification utility loaded');
         
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
