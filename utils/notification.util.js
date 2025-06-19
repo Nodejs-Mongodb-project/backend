@@ -63,6 +63,7 @@ cron.schedule('* * * * *', async () => {
             );
 
             // Update the status of the casiers to available
+            const casierIds = expiredReservations.map(reservation => reservation.casierId);
             await Casier.updateMany(
                 { _id: { $in: casierIds } },
                 { status: 'available' }
