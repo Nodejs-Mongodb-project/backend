@@ -179,18 +179,34 @@ const forgotPassword = async (req, res) => {
 };
 
 const getAllUsers = async (req, res) => {
-  try {
-    const users = await userModel.find({});
-    const totalUsers = users.length;
-    
-    res.json({ 
-      users,
-      totalUsers 
-    });
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Error fetching users' });
-  }
+    try {
+        const allUsers = await userModel.find({});
+        
+        if (!allUsers) {
+            return res.status(404).json({ message: 'No users found' });
+        }
+        
+        // Map users to hide password
+        const users = allUsers.map(user => ({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        }));
+        
+        const totalUsers = users.length;
+        
+        res.status(200).json({ 
+            message: 'Users retrieved successfully', 
+            users,
+            totalUsers 
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ message: 'Error fetching users' });
+    }
 };
 
 const getMe = async (req, res) => {
