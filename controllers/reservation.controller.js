@@ -87,29 +87,43 @@ const getReservationById = async (req, res) => {
   }
 };
 
-const cancelReservation = async (reservationId) => {
+const cancelReservation = async (req, res) => {
   try {
+    const reservationId = req.params.reservationId;
+    
+    if (!reservationId) {
+      return res.status(400).json({ message: 'ID de réservation requis' });
+    }
+
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) {
-      throw new Error('Réservation non trouvée');
+      return res.status(404).json({ message: 'Réservation non trouvée' });
     }
 
     const casier = await Casier.findById(reservation.casierId);
     if (!casier) {
-      throw new Error('Casier non trouvé');
+      return res.status(404).json({ message: 'Casier non trouvé' });
     }
+    
     casier.status = 'available';
     await casier.save();
     await Reservation.deleteOne({ _id: reservationId });
-    await sendEmail(
-      reservation.userId,
-      'Réservation annulée',
-      `Votre réservation pour le casier #${casier.numero} a été annulée.`
-    );
-    return { message: 'Réservation annulée avec succès' };
+    
+    try {
+      await sendEmail(
+        reservation.userId,
+        'Réservation annulée',
+        `Votre réservation pour le casier #${casier.numero} a été annulée.`
+      );
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+      // Continue even if email fails
+    }
+    
+    res.status(200).json({ message: 'Réservation annulée avec succès' });
   } catch (error) {
-    console.error(error);
-    throw new Error('Erreur lors de l\'annulation de la réservation');
+    console.error('Erreur lors de l\'annulation:', error);
+    res.status(500).json({ message: 'Erreur serveur lors de l\'annulation' });
   }
 };
 
@@ -137,22 +151,11 @@ const getReservationByCasierId = async (req, res) => {
   }
 };
 
-const cancelReservationController = async (req, res) => {
-  try {
-    const reservationId = req.params.reservationId;
-    const result = await cancelReservation(reservationId);
-    res.status(200).json(result);
-  } catch (error) {
-    console.error('Erreur lors de l\'annulation:', error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
 module.exports = {
   reserverCasier,
   getReservationsByUserId,
   getReservationById,
-  cancelReservation: cancelReservationController,
+  cancelReservation,
   getAllReservations,
   getReservationByCasierId
 };

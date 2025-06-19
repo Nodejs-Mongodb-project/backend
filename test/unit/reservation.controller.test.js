@@ -24,7 +24,8 @@ describe('ReservationController', () => {
             headers: {
                 authorization: 'Bearer valid-token'
             },
-            user: { _id: 'user123', email: 'test@example.com' }
+            user: { _id: 'user123', email: 'test@example.com' },
+            params: {}
         };
         res = {
             json: jest.fn(),
@@ -185,7 +186,7 @@ describe('ReservationController', () => {
     describe('cancelReservation', () => {
         test('should cancel reservation successfully', async () => {
             // Arrange
-            const reservationId = 'reservation123';
+            req.params.reservationId = 'reservation123';
             
             const mockReservation = {
                 _id: 'reservation123',
@@ -206,7 +207,7 @@ describe('ReservationController', () => {
             sendEmail.mockResolvedValue();
             
             // Act
-            const result = await cancelReservation(reservationId);
+            await cancelReservation(req, res);
             
             // Assert
             expect(Reservation.findById).toHaveBeenCalledWith('reservation123');
@@ -219,33 +220,111 @@ describe('ReservationController', () => {
                 'Réservation annulée',
                 expect.stringContaining('casier #42 a été annulée')
             );
-            expect(result).toEqual({
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
                 message: 'Réservation annulée avec succès'
             });
         });
         
-        test('should throw error when reservation not found', async () => {
+        test('should return error when reservationId is missing', async () => {
             // Arrange
-            const reservationId = 'reservation999';
+            req.params.reservationId = undefined;
+            
+            // Act
+            await cancelReservation(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'ID de réservation requis'
+            });
+        });
+        
+        test('should return error when reservation not found', async () => {
+            // Arrange
+            req.params.reservationId = 'reservation999';
             
             Reservation.findById.mockResolvedValue(null);
             
-            // Act & Assert
-            await expect(cancelReservation(reservationId))
-                .rejects
-                .toThrow("Erreur lors de l'annulation de la réservation");
+            // Act
+            await cancelReservation(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Réservation non trouvée'
+            });
         });
         
-        test('should handle errors in cancelReservation', async () => {
+        test('should return error when casier not found', async () => {
             // Arrange
-            const reservationId = 'reservation123';
+            req.params.reservationId = 'reservation123';
+            
+            const mockReservation = {
+                _id: 'reservation123',
+                casierId: 'casier999',
+                userId: 'user123'
+            };
+            
+            Reservation.findById.mockResolvedValue(mockReservation);
+            Casier.findById.mockResolvedValue(null);
+            
+            // Act
+            await cancelReservation(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Casier non trouvé'
+            });
+        });
+        
+        test('should handle database errors gracefully', async () => {
+            // Arrange
+            req.params.reservationId = 'reservation123';
             
             Reservation.findById.mockRejectedValue(new Error('Database error'));
             
-            // Act & Assert
-            await expect(cancelReservation(reservationId))
-                .rejects
-                .toThrow('Erreur lors de l\'annulation de la réservation');
+            // Act
+            await cancelReservation(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Erreur serveur lors de l\'annulation'
+            });
+        });
+        
+        test('should continue if email sending fails', async () => {
+            // Arrange
+            req.params.reservationId = 'reservation123';
+            
+            const mockReservation = {
+                _id: 'reservation123',
+                casierId: 'casier123',
+                userId: 'user123'
+            };
+            
+            const mockCasier = {
+                _id: 'casier123',
+                numero: 42,
+                status: 'reserved',
+                save: jest.fn().mockResolvedValue()
+            };
+            
+            Reservation.findById.mockResolvedValue(mockReservation);
+            Casier.findById.mockResolvedValue(mockCasier);
+            Reservation.deleteOne.mockResolvedValue();
+            sendEmail.mockRejectedValue(new Error('Email service error'));
+            
+            // Act
+            await cancelReservation(req, res);
+            
+            // Assert
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Réservation annulée avec succès'
+            });
         });
     });
 });
