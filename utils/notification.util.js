@@ -1,6 +1,6 @@
 const cron = require('node-cron');
-const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
+const { sendEmail } = require('./email.util'); // Use existing email utility
 
 // Schedule a cron job to run every minute to check for expired reservations
 cron.schedule('* * * * *', async () => {
@@ -30,27 +30,14 @@ cron.schedule('* * * * *', async () => {
 
         // If there are soon to be expired reservations, send notifications
         if (soonToExpireReservations.length > 0) {
-            // Create a transporter for sending emails
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS,
-                },
-            });
-
             // Loop through each soon to be expired reservation
             for (const reservation of soonToExpireReservations) {
                 try {
-                    // Send an email notification to the user
-                    const mailOptions = {
-                        from: process.env.EMAIL_USER,
-                        to: reservation.userId.email,
-                        subject: 'Reservation Expiration Reminder',
-                        text: `Dear ${reservation.userId.name},\n\nYour reservation for casier ${reservation.casierId} is about to expire in less than an hour.\nPlease take necessary actions.\n\nBest regards,\nYour Team`,
-                    };
-
-                    await transporter.sendMail(mailOptions);
+                    // Send an email notification to the user using existing email utility
+                    const emailSubject = 'Reservation Expiration Reminder';
+                    const emailText = `Dear ${reservation.userId.name},\n\nYour reservation for casier ${reservation.casierId} is about to expire in less than an hour.\nPlease take necessary actions.\n\nBest regards,\nYour Team`;
+                    
+                    await sendEmail(reservation.userId.email, emailSubject, emailText);
                     console.log(`Notification sent to ${reservation.userId.email}`);
                 } catch (emailError) {
                     console.error('Error sending email notification:', emailError);
