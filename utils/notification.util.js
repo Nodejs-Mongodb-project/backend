@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const mongoose = require('mongoose');
 const { sendEmail } = require('./email.util'); // Use existing email utility
+const Casier = require('../schema/casier.schema.js');
 
 // Schedule a cron job to run every minute to check for expired reservations
 cron.schedule('* * * * *', async () => {
@@ -61,11 +62,10 @@ cron.schedule('* * * * *', async () => {
                 { statut: 'expired' }
             );
 
-            // Update casier status to available for expired reservations
-            const casierIds = expiredReservations.map(reservation => reservation.casierId);
+            // Update the status of the casiers to available
             await Casier.updateMany(
                 { _id: { $in: casierIds } },
-                { statut: 'available' }
+                { status: 'available' }
             );
 
             console.log(`${expiredReservations.length} reservations have been marked as expired and their casiers are now available.`);
@@ -73,10 +73,8 @@ cron.schedule('* * * * *', async () => {
             console.log('No expired reservations found.');
         }
         
-        console.log('Cron job executed successfully: Checked for soon to be expired reservations.');
     } catch (error) {
         console.error('Error executing cron job:', error);
-        // Don't throw the error to prevent crashing the application
     }
 });
 

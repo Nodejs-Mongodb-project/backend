@@ -60,7 +60,7 @@ const reserverCasier = async (req, res) => {
 
 const getReservationsByUserId = async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.params.userId;
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
     }
@@ -69,7 +69,7 @@ const getReservationsByUserId = async (req, res) => {
     res.status(200).json(reservations);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erreur lors de la récupération des réservations' });
+    res.status(500).json({ message: 'Error retrieving reservations' });
   }
 };
 
