@@ -137,11 +137,22 @@ const getReservationByCasierId = async (req, res) => {
   }
 };
 
+const cancelReservationController = async (req, res) => {
+  try {
+    const reservationId = req.params.reservationId;
+    const result = await cancelReservation(reservationId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Erreur lors de l\'annulation:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   reserverCasier,
   getReservationsByUserId,
   getReservationById,
-  cancelReservation,
+  cancelReservation: cancelReservationController,
   getAllReservations,
   getReservationByCasierId
 };
