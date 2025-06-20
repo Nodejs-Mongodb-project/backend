@@ -28,8 +28,8 @@ const createCheckoutSession = async (req, res) => {
                 },
                 quantity: 1,
             }],
-            success_url: `${FRONTEND_URL}dashboard?session_id={CHECKOUT_SESSION_ID}&lockerId=${lockerId}&duree=${duration}`,
-            cancel_url: `${FRONTEND_URL}lockers`,
+            success_url: `${FRONTEND_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&lockerId=${lockerId}&duree=${duration}`,
+            cancel_url: `${FRONTEND_URL}/lockers`,
         });
 
         res.status(200).json({ url: session.url });
